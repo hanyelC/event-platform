@@ -1,53 +1,21 @@
-import { gql, useQuery } from "@apollo/client";
 import { Player, Youtube } from "@vime/react";
 import { CaretRight, DiscordLogo, FileArrowDown, Lightning } from "phosphor-react";
-
-const GET_LESSON_BY_SLUG_QUERY = gql`
-  query GetLessonBySlug ($slug: String) {
-  lesson(where: {slug: $slug}) {
-    id
-    title
-    videoId
-    description
-    teacher {
-      bio
-      avatarURL
-      name
-    }
-  }
-}
-`
+import { useGetLessonBySlugQuery, useGetLessonsQuery } from "../graphql/generated";
 
 interface VideoProps {
   lessonSlug: string
 }
 
-interface GetLessonBySlugResponse {
-  lesson: {
-    title: string
-    videoId: string
-    description: string
-    teacher: {
-      bio: string
-      avatarUrl: string
-      name: string
-    }
-  }
-}
-
 export function Video(props: VideoProps) {
 
-    const { data } = useQuery<GetLessonBySlugResponse>(GET_LESSON_BY_SLUG_QUERY, {
-      variables: {
-        slug: props.lessonSlug
-      },
-      fetchPolicy:"no-cache"
-    })
+    const { data } = useGetLessonBySlugQuery({
+        variables: {
+          slug: props.lessonSlug
+        },
+        fetchPolicy:"no-cache"
+      })
 
-
-  console.log(data?.lesson)
-
-  if(!data){
+  if(!data || !data.lesson){
     return <p>Carregando...</p>
   }
   
@@ -56,7 +24,7 @@ export function Video(props: VideoProps) {
       <div className="bg-black flex justify-center">
         <div className="h-full w-full max-w-[1100px] max-h-[60vh] aspect-video">
           <Player controls={true}>
-            <Youtube videoId={data?.lesson.videoId} />
+            <Youtube videoId={data.lesson.videoId} />
           </Player>
         </div>
       </div>
@@ -71,10 +39,11 @@ export function Video(props: VideoProps) {
               { data.lesson.description}
             </p>
 
-            <div className="flex items-center gap-4 mt-6">
+            {data.lesson.teacher && (
+              <div className="flex items-center gap-4 mt-6">
               <img
                 className="h-16 w-16 rounded-full border-2 border-blue-500"
-                src={data.lesson.teacher.avatarUrl}
+                src={data.lesson.teacher.avatarURL}
                 alt=""
               />
 
@@ -87,6 +56,7 @@ export function Video(props: VideoProps) {
                 </span>
               </div>
             </div>
+            )}
           </div>
 
           <div className="flex flex-col gap-4">
